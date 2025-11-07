@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE ahtml>
 <html lang="ka">
 <head>
     <meta charset="UTF-8">
@@ -96,14 +96,14 @@
 
     <!-- Firebase SDK-ების იმპორტი -->
     <script type="module">
-        // Firebase-ის საჭირო მოდულების იმპორტი
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // Firebase-ის საჭირო მოდულების იმპორტი. განახლებულია 12.5.0 ვერსიით.
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
         // --- Firebase კონფიგურაცია ---
 
-        // Firebase-ის კონფიგურაციის მონაცემები (თქვენს მიერ მოწოდებული)
+        // Firebase-ის კონფიგურაციის მონაცემები (განახლებულია მომხმარებლის მიერ მოწოდებული მონაცემებით)
         const hardcodedConfig = {
             apiKey: "AIzaSyAB2FnGzm-vRFzjzMFc5fSqIx4JFhtSZHg",
             authDomain: "hostsite-87e89.firebaseapp.com",
