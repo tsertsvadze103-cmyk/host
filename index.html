@@ -151,17 +151,31 @@
                 db = getFirestore(app);
                 auth = getAuth(app);
 
-                // ავთენტიფიკაცია: ვიყენებთ ტოკენს, თუ მოწოდებულია, წინააღმდეგ შემთხვევაში - ანონიმურ შესვლას.
+                let customTokenSuccess = false;
+
+                // 1. ცდა ავთენტიფიკაციის ტოკენით
                 if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                    showMessage("✅ Firebase ავთენტიფიკაცია წარმატებით დასრულდა (მომხმარებლის ტოკენით).");
-                } else {
+                    try {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                        showMessage("✅ Firebase ავთენტიფიკაცია წარმატებით დასრულდა (მომხმარებლის ტოკენით).");
+                        customTokenSuccess = true;
+                    } catch (e) {
+                        // თუ ტოკენით შესვლა ვერ მოხერხდა (აქ დაფიქსირდება auth/admin-restricted-operation)
+                        console.error("Custom token sign-in failed. Falling back to anonymous login:", e);
+                        showMessage(`⚠️ ტოკენით შესვლა ვერ მოხერხდა: ${e.message}. ვეცდებით ანონიმურ შესვლას.`, true);
+                    }
+                }
+
+                // 2. თუ ტოკენით შესვლა ვერ მოხერხდა, ან ტოკენი არ იყო
+                if (!customTokenSuccess) {
                     await signInAnonymously(auth);
                     showMessage("✅ Firebase ავთენტიფიკაცია წარმატებით დასრულდა (ანონიმურად).");
                 }
+                
                 isAuthReady = true;
 
             } catch (error) {
+                // კრიტიკული შეცდომა (მაგ., ინიციალიზაციის პრობლემა)
                 console.error("Firebase-ის ინიციალიზაციის ან ავთენტიფიკაციის შეცდომა:", error);
                 showMessage(`❌ Firebase-ის ინიციალიზაციის შეცდომა: ${error.message}. შეამოწმეთ კონფიგურაცია.`, true);
             }
