@@ -1,109 +1,286 @@
-<!DOCTYPE ahtml>
-<html lang="ka">
+<!DOCTYPE html>
+<html lang="ka" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ლაივ სტრიმინგის სიმულატორი</title>
+    <title>დროებითი ჯგუფური ჩატი</title>
     <!-- Tailwind CSS-ის ჩატვირთვა სტილისთვის -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Inter ფონტის გამოყენება -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
+        /* Custom animations for Tailwind */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            80% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .animate-fadeIn { animation: fadeIn 0.5s ease-out forwards; }
+        .animate-slideInUp { animation: slideInUp 0.3s ease-out forwards; }
+        .animate-pulse-slow { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        .animate-popIn { animation: popIn 0.4s ease-out forwards; }
+        .animate-spin-slow { animation: spin 2s linear infinite; }
+
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f7f9fb;
+        }
+        .chat-area {
+            height: 50vh; /* შემცირებულია მომხმარებლების სიის დასატევად */
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+        .message-bubble-user {
+            border-radius: 1rem 1rem 0 1rem;
+            align-self: flex-end;
+        }
+        .message-bubble-other {
+            border-radius: 1rem 1rem 1rem 0;
+            align-self: flex-start;
+        }
+        .active-chat-item, .user-item {
+            cursor: pointer;
+            transition: background-color 0.15s;
+        }
+
+        /* Dark Mode Styles */
+        body {
+            background-color: #1a202c; /* gray-900 */
+            color: #e2e8f0; /* gray-200 */
         }
         .card {
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
+            background-color: #2d3748; /* gray-800 */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border-color: #4a5568; /* gray-700 */
         }
-        .btn-primary {
-            background-color: #4f46e5;
-            transition: background-color 0.3s;
+        header {
+            background-color: #2d3748; /* gray-800 */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
         }
-        .btn-primary:hover {
-            background-color: #4338ca;
+        h1 {
+            color: #e2e8f0; /* gray-200 */
         }
-        .status-indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 8px;
+        p {
+            color: #a0aec0; /* gray-400 */
+        }
+        label {
+            color: #cbd5e0; /* gray-300 */
+        }
+        input[type="text"] {
+            background-color: #4a5568; /* gray-700 */
+            color: #e2e8f0; /* gray-200 */
+            border-color: #6a7280; /* gray-600 */
+        }
+        .message-box-error {
+            background-color: #4a1c1c; /* Darker red */
+            color: #fca5a5; /* Red-300 */
+            border-color: #7f1d1d; /* Red-800 */
+        }
+        .message-box-info {
+            background-color: #1e3a8a; /* Darker blue */
+            color: #93c5fd; /* Blue-300 */
+            border-color: #1e40af; /* Blue-800 */
+        }
+        .active-chat-item {
+            background-color: #3b82f6; /* blue-600 */
+            color: white;
+        }
+        .active-chat-item:hover {
+            background-color: #2563eb; /* blue-700 */
+        }
+        .user-item-self {
+            background-color: #4c4d74; /* Custom darker indigo for self */
+        }
+        .user-item {
+            border-bottom: 1px solid #4a5568;
+        }
+        #loading-chats-msg {
+            color: #a0aec0; /* gray-400 */
+        }
+        #messages-container {
+            background-color: #2d3748; /* gray-800 */
+        }
+        .message-bubble-user {
+            background-color: #6366f1; /* indigo-500 */
+            color: white;
+        }
+        .message-bubble-other {
+            background-color: #4a5568; /* gray-700 */
+            color: #e2e8f0; /* gray-200 */
+        }
+        .message-bubble-user .font-bold {
+            color: #c7d2fe; /* indigo-200 */
+        }
+        .message-bubble-other .font-bold {
+            color: #a0aec0; /* gray-400 */
+        }
+        .message-bubble-user .self-end {
+            color: #a5b4fc; /* indigo-300 */
+        }
+        .message-bubble-other .self-end {
+            color: #94a3b8; /* gray-400 */
+        }
+        #chat-room-title {
+            color: #93c5fd; /* blue-300 */
+        }
+        #leave-chat-btn {
+            color: #fca5a5; /* red-300 */
+            border-color: #ef4444; /* red-500 */
+        }
+        #leave-chat-btn:hover {
+            color: #f87171; /* red-400 */
+            border-color: #dc2626; /* red-600 */
+        }
+        #user-info {
+            color: #a0aec0; /* gray-400 */
+            word-break: break-all;
+        }
+
+        /* Material Icons sizing */
+        .material-icons {
+            font-size: 1.25rem; /* Default for buttons/headers */
+            vertical-align: middle;
+            margin-right: 0.25rem;
+        }
+        .material-icons.text-2xl {
+            font-size: 1.5rem;
+        }
+        .material-icons.text-3xl {
+            font-size: 1.875rem;
+        }
+        .material-icons.text-4xl {
+            font-size: 2.25rem;
         }
     </style>
 </head>
-<body class="min-h-screen p-4 md:p-8">
+<body class="min-h-screen p-4 md:p-8 transition-colors duration-500 ease-in-out">
 
-    <div id="app" class="max-w-6xl mx-auto">
-        <header class="text-center mb-10 p-4 bg-white rounded-xl shadow-lg">
-            <h1 class="text-4xl font-extrabold text-gray-800">🌐 ლაივ სტრიმინგის სიმულატორი</h1>
-            <p class="text-gray-500 mt-2">გამოიყენეთ 4-ციფრიანი კოდი სტრიმინგის დასაწყებად ან სანახავად.</p>
+    <div id="app" class="max-w-xl mx-auto">
+        <header class="text-center mb-10 p-4 rounded-xl shadow-lg transition-colors duration-500 ease-in-out card animate-popIn">
+            <h1 class="text-3xl font-extrabold flex items-center justify-center gap-2">
+                <span class="material-icons text-4xl text-blue-500">chat</span> დროებითი ჯგუფური ჩატი
+            </h1>
+            <p class="mt-2">შეუერთდით ან შექმენით დროებითი ჩატი მარტივად, 3-ციფრიანი კოდით.</p>
         </header>
 
         <!-- სტატუსის შეტყობინებები -->
-        <div id="message-box" class="mb-6 p-4 rounded-lg text-sm hidden" role="alert"></div>
+        <div id="message-box" class="mb-6 p-4 rounded-lg text-sm hidden font-medium transition-all duration-300 ease-in-out" role="alert"></div>
 
-        <div class="grid md:grid-cols-2 gap-8">
-
-            <!-- 1. მოწყობილობის სტრიმინგის სიმულატორი (Uploader) -->
-            <div class="card bg-white p-6 rounded-xl border border-blue-100">
-                <h2 class="text-2xl font-bold mb-4 text-blue-700">📸 მოწყობილობა: სტრიმინგის დაწყება</h2>
-                
-                <div class="mb-4">
-                    <label for="device-code-input" class="block text-gray-600 font-medium mb-1">4-ციფრიანი კოდი (მაგ: 1010)</label>
-                    <input type="text" id="device-code-input" maxlength="4" placeholder="ჩაწერეთ კოდი" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-lg">
-                </div>
-                
-                <button id="start-stream-btn" class="w-full btn-primary text-white font-semibold py-3 rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-300 transition duration-150 ease-in-out">
-                    სტრიმინგის დაწყება (1 წამში 1 კადრი)
-                </button>
-
-                <p id="device-status" class="mt-4 text-sm font-semibold p-3 rounded-lg bg-gray-100 text-gray-600">
-                    <span class="status-indicator bg-red-500" id="device-light"></span>
-                    სტატუსი: უმოქმედო
-                </p>
-
-                <div class="mt-4 p-3 bg-blue-50 border-l-4 border-blue-500 text-blue-700 text-sm rounded-lg">
-                    <p>⚠️ **მნიშვნელოვანია**: სტრიმინგი მუშაობს მხოლოდ მაშინ, როცა ეს გვერდი ღიაა. ყოველ წამში ხდება Firestore-ის დოკუმენტის განახლება.</p>
-                </div>
+        <!-- ჩატის შესვლის ფორმა -->
+        <div id="join-section" class="card p-6 rounded-xl border animate-fadeIn">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <span class="material-icons text-2xl text-blue-500">login</span> ჩატში შესვლა
+            </h2>
+            
+            <!-- ახალი: ნიკნეიმი -->
+            <div class="mb-4">
+                <label for="nickname-input" class="block font-medium mb-1">თქვენი მეტსახელი</label>
+                <input type="text" id="nickname-input" maxlength="20" placeholder="მაგ: კოდისტი_77" class="w-full p-3 border rounded-lg focus:ring-yellow-500 focus:border-yellow-500 transition-all duration-200" value="ანონიმური_მომხმარებელი">
             </div>
 
-            <!-- 2. მნახველი (Viewer) -->
-            <div class="card bg-white p-6 rounded-xl border border-green-100">
-                <h2 class="text-2xl font-bold mb-4 text-green-700">📺 მნახველი: სტრიმინგის ნახვა</h2>
-                
-                <div class="mb-4">
-                    <label for="viewer-code-input" class="block text-gray-600 font-medium mb-1">4-ციფრიანი კოდი</label>
-                    <input type="text" id="viewer-code-input" maxlength="4" placeholder="ჩაწერეთ სტრიმის კოდი" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-lg">
-                </div>
-                
-                <button id="view-stream-btn" class="w-full bg-green-500 text-white font-semibold py-3 rounded-lg shadow-md hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-300 transition duration-150 ease-in-out">
-                    სტრიმინგის ნახვა
-                </button>
+            <div class="mb-4">
+                <label for="chat-code-input" class="block font-medium mb-1">3-ციფრიანი ჩატის კოდი (მაგ: 149)</label>
+                <input type="text" id="chat-code-input" maxlength="3" placeholder="ჩაწერეთ კოდი" class="w-full p-3 border rounded-lg focus:ring-blue-500 focus:border-blue-500 text-lg text-center font-mono tracking-widest transition-all duration-200">
+            </div>
+            <button id="join-chat-btn" class="w-full bg-green-500 text-white font-semibold py-3 rounded-lg shadow-md hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-300 transition duration-150 ease-in-out flex items-center justify-center gap-2 transform hover:scale-105">
+                <span class="material-icons">add_circle</span> ჩატში შესვლა / შექმნა
+            </button>
 
-                <div class="mt-6 border-t pt-4">
-                    <h3 class="text-xl font-semibold mb-3 text-gray-700">მიმდინარე კადრი:</h3>
-                    <div id="image-container" class="w-full bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center aspect-video">
-                        <img id="stream-image" src="https://placehold.co/600x400/CCCCCC/666666?text=დაელოდეთ+კადრს" alt="ლაივ სტრიმინგის კადრი" class="w-full h-full object-cover">
+            <!-- აქტიური ჩატების სია -->
+            <div class="mt-8 pt-4 border-t border-gray-700">
+                <h3 class="text-lg font-bold mb-3 flex items-center gap-2">
+                    <span class="material-icons text-orange-500">bolt</span> აქტიური ჩატები:
+                </h3>
+                <div id="active-chats-list" class="flex flex-col gap-2">
+                    <p class="text-sm animate-pulse-slow" id="loading-chats-msg">
+                        <span class="material-icons animate-spin-slow mr-2">sync</span>აქტიური ჩატების ჩატვირთვა...
+                    </p>
+                </div>
+                <p class="text-xs mt-3">დააწკაპუნეთ ჩატზე შესასვლელად. (განახლდება შეტყობინების გაგზავნისას)</p>
+            </div>
+        </div>
+
+        <!-- ჩატის ინტერფეისი (თავიდან დამალულია) -->
+        <div id="chat-section" class="card p-6 rounded-xl border border-blue-700 hidden">
+            <div class="flex justify-between items-center mb-4 border-b pb-3 border-gray-700">
+                <h2 id="chat-room-title" class="text-2xl font-bold flex items-center gap-2">
+                    <span class="material-icons text-blue-500">forum</span> ჩატი #...
+                </h2>
+                <button id="leave-chat-btn" class="text-red-300 hover:text-red-400 font-medium py-1 px-3 rounded-full border border-red-600 transition duration-150 flex items-center gap-1 transform hover:scale-105">
+                    <span class="material-icons text-lg">logout</span> ჩატის დატოვება
+                </button>
+            </div>
+            
+            <!-- მომხმარებლების და შეტყობინებების კონტეინერი -->
+            <div class="flex flex-col md:flex-row gap-4 mb-4">
+                <!-- აქტიური მომხმარებლები -->
+                <div class="md:w-1/3 w-full bg-gray-700 p-3 rounded-lg flex flex-col h-full max-h-[10rem] md:max-h-[50vh] overflow-y-auto">
+                    <h3 class="text-sm font-semibold mb-2 flex items-center text-green-400">
+                        <span class="material-icons text-sm mr-1">person</span> აქტიური: <span id="active-user-count">0</span>
+                    </h3>
+                    <div id="active-users-list" class="flex flex-col gap-1 text-sm">
+                        <p class="text-xs text-gray-400 italic">ჩაიტვირთება...</p>
                     </div>
-                    <p id="viewer-status" class="mt-3 text-sm font-medium text-gray-500 text-center">კოდის შეყვანის შემდეგ დააჭირეთ 'სტრიმინგის ნახვა'-ს.</p>
+                </div>
+
+                <!-- შეტყობინებების ჩვენების არე -->
+                <div id="messages-container" class="chat-area flex flex-col space-y-3 p-4 rounded-lg transition-colors duration-300 ease-in-out md:w-2/3 w-full">
+                    <p class="text-center italic mt-4">
+                        <span class="material-icons animate-spin-slow mr-2">sync</span> შეტყობინებების ჩატვირთვა...
+                    </p>
                 </div>
             </div>
 
+            <!-- შეტყობინების გაგზავნის ფორმა -->
+            <div class="flex gap-2">
+                <input type="text" id="message-input" placeholder="ჩაწერეთ შეტყობინება..." class="flex-grow p-3 border rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                <button id="send-message-btn" class="bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-800 transition duration-150 flex items-center gap-1 transform hover:scale-105" disabled>
+                    <span class="material-icons">send</span> გაგზავნა
+                </button>
+            </div>
+            <p id="user-info" class="mt-3 text-xs text-gray-500">თქვენი ID: N/A</p>
         </div>
     </div>
 
     <!-- Firebase SDK-ების იმპორტი -->
     <script type="module">
-        // Firebase-ის საჭირო მოდულების იმპორტი. განახლებულია 12.5.0 ვერსიით.
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+        // Firebase-ის საჭირო მოდულების იმპორტი (v11.6.1)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            doc, 
+            collection, 
+            setDoc, 
+            addDoc, 
+            deleteDoc, 
+            onSnapshot, 
+            query, 
+            getDocs, 
+            writeBatch,
+            orderBy
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // --- გლობალური ცვლადები ---
 
-        // --- Firebase კონფიგურაცია ---
-
-        // Firebase-ის კონფიგურაციის მონაცემები (განახლებულია მომხმარებლის მიერ მოწოდებული მონაცემებით)
         const hardcodedConfig = {
             apiKey: "AIzaSyAB2FnGzm-vRFzjzMFc5fSqIx4JFhtSZHg",
             authDomain: "hostsite-87e89.firebaseapp.com",
@@ -113,207 +290,557 @@
             appId: "1:594577784773:web:16b148cc0bc00999ebd5ac"
         };
         
-        // გლობალური ცვლადების გამოყენება, თუ ხელმისაწვდომია, წინააღმდეგ შემთხვევაში hardcoded config-ის გამოყენება.
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : hardcodedConfig;
-        
-        // App ID-ის განსაზღვრა
         const appId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.projectId; 
         
-        // საწყისი ავთენტიფიკაციის ტოკენი
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
         let db;
         let auth;
-        let streamInterval = null; // სტრიმინგის ინტერვალი
-        let unsubscribeViewer = null; // მნახველის onSnapshot ფუნქცია
-        let isAuthReady = false; // ავთენტიფიკაციის სტატუსი
+        let isAuthReady = false; 
+        let currentChatCode = null;
+        let currentUserId = null;
+        let currentDisplayName = "ანონიმური_მომხმარებელი"; // ინახავს მომხმარებლის მიერ არჩეულ სახელს
+        let unsubscribeMessages = null; 
+        let unsubscribeChats = null;
+        let unsubscribePresence = null; // ახალი: Presence მსმენელი
+
+        // --- UI ელემენტები ---
+        const messageBox = document.getElementById('message-box');
+        const joinSection = document.getElementById('join-section');
+        const chatSection = document.getElementById('chat-section');
+        const messagesContainer = document.getElementById('messages-container');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-message-btn');
+        const chatRoomTitle = document.getElementById('chat-room-title');
+        const userInfoDisplay = document.getElementById('user-info');
+        const activeChatsList = document.getElementById('active-chats-list');
+        const nicknameInput = document.getElementById('nickname-input');
+        const activeUsersList = document.getElementById('active-users-list');
+        const activeUserCount = document.getElementById('active-user-count');
 
         // --- UI ფუნქციები ---
 
-        // შეტყობინებების ჩვენება UI-ზე
         function showMessage(text, isError = false) {
-            const box = document.getElementById('message-box');
-            box.textContent = text;
-            box.className = 'mb-6 p-4 rounded-lg text-sm block font-medium';
+            messageBox.innerHTML = ''; // Clear previous content
+            const iconSpan = document.createElement('span');
+            iconSpan.classList.add('material-icons', 'mr-2', 'align-middle');
+            iconSpan.textContent = isError ? 'error' : 'check_circle';
+
+            const textSpan = document.createElement('span');
+            textSpan.innerHTML = text; // Use innerHTML to allow custom icons in text
+
+            messageBox.appendChild(iconSpan);
+            messageBox.appendChild(textSpan);
+            
+            messageBox.className = 'mb-6 p-4 rounded-lg text-sm block font-medium transition-all duration-300 ease-in-out animate-popIn';
             if (isError) {
-                box.classList.add('bg-red-100', 'text-red-700', 'border', 'border-red-400', 'shadow-md');
+                messageBox.classList.add('message-box-error');
             } else {
-                box.classList.add('bg-blue-100', 'text-blue-700', 'border', 'border-blue-400', 'shadow-md');
+                messageBox.classList.add('message-box-info');
             }
         }
 
+        function toggleChatView(inChat) {
+            if (inChat) {
+                joinSection.classList.add('hidden');
+                chatSection.classList.remove('hidden');
+                chatSection.classList.add('animate-fadeIn'); // Add animation class
+                joinSection.classList.remove('animate-fadeIn'); // Remove if it was there
+            } else {
+                chatSection.classList.add('hidden');
+                joinSection.classList.remove('hidden');
+                joinSection.classList.add('animate-fadeIn'); // Add animation class
+                chatSection.classList.remove('animate-fadeIn'); // Remove if it was there
+            }
+        }
+        
         // --- Firebase ინიციალიზაცია და ავთენტიფიკაცია ---
 
         async function initializeFirebase() {
             try {
-                // 1. ინიციალიზაცია
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
-
-                let authSuccess = false;
-
-                // 2. ცდა ავთენტიფიკაციის ტოკენით (თუ მოწოდებულია)
-                if (initialAuthToken) {
-                    try {
-                        await signInWithCustomToken(auth, initialAuthToken);
-                        showMessage("✅ Firebase ავთენტიფიკაცია წარმატებით დასრულდა (მომხმარებლის ტოკენით).");
-                        authSuccess = true;
-                    } catch (e) {
-                        // ტოკენით შესვლა ვერ მოხერხდა (აქ ვიღებთ 'auth/admin-restricted-operation' შეცდომას)
-                        console.error("Custom token sign-in failed:", e.message);
-                        // არ ვუშვებთ კრიტიკულ შეცდომას, ვცდილობთ ანონიმურ შესვლას
-                        showMessage(`⚠️ ტოკენით შესვლა ვერ მოხერხდა: ${e.message}. ვეცდებით ანონიმურ შესვლას.`, true);
-                    }
-                }
-
-                // 3. თუ არ ვართ შესული (ან ტოკენით შესვლა ჩავარდა), ვცდილობთ ანონიმურ შესვლას
-                if (!authSuccess) {
-                    await signInAnonymously(auth);
-                    showMessage("✅ Firebase ავთენტიფიკაცია წარმატებით დასრულდა (ანონიმურად).");
-                    authSuccess = true;
-                }
                 
-                // 4. საბოლოო შემოწმება
-                if (authSuccess && auth.currentUser) {
-                     isAuthReady = true;
+                // ანონიმური ავთენტიფიკაცია
+                await signInAnonymously(auth);
+                
+                if (auth.currentUser) {
+                    isAuthReady = true;
+                    currentUserId = auth.currentUser.uid;
+                    // აჩვენეთ სრული ID, როგორც მოთხოვნილია მულტი-მომხმარებლიანი აპებისთვის
+                    userInfoDisplay.textContent = `თქვენი ID: ${currentUserId}`; 
+                    showMessage(`Firebase ავთენტიფიკაცია წარმატებით დასრულდა.`, false);
+                    
+                    // ავთენტიფიკაციის შემდეგ, დაიწყეთ აქტიური ჩატების მოსმენა
+                    setupActiveChatsListener();
+
                 } else {
-                    throw new Error("Unable to sign in anonymously or with token.");
+                    throw new Error("Unable to sign in anonymously.");
                 }
 
             } catch (error) {
-                // კრიტიკული შეცდომა (მაგ., ინიციალიზაციის ან ანონიმური შესვლის პრობლემა)
                 console.error("Firebase-ის ინიციალიზაციის ან ავთენტიფიკაციის შეცდომა:", error);
-                showMessage(`❌ Firebase-ის ინიციალიზაციის შეცდომა: ${error.message}. შეამოწმეთ კონფიგურაცია.`, true);
-                return; // აპლიკაცია ვერ გაეშვება ავთენტიფიკაციის გარეშე.
+                showMessage(`Firebase-ის შეცდომა: ${error.message}.`, true);
             }
-
-            // --- კოდის დანარჩენი ნაწილი (მხოლოდ წარმატების შემთხვევაში) ---
+        }
+        
+        // --- მონაცემების მართვა ---
+        
+        // გენერირებს ბილიკს (Path) Chat Root დოკუმენტისთვის (საჭიროა სიისთვის და წაშლისთვის)
+        function getChatDocRef(code) {
+            return doc(db, 'artifacts', appId, 'public', 'data', 'chats', code);
+        }
+        
+        // გენერირებს ბილიკს (Path) Presence დოკუმენტისთვის
+        function getPresenceDocRef(code, userId) {
+            return doc(db, 'artifacts', appId, 'public', 'data', 'chats', code, 'presence', userId);
+        }
+        
+        // გენერირებს ბილიკს შეტყობინებების კოლექციისთვის
+        function getMessagesCollectionRef(code) {
+            return collection(db, 'artifacts', appId, 'public', 'data', 'chats', code, 'messages');
         }
 
-        // --- მოწყობილობის სიმულატორის ლოგიკა (Uploader) ---
-
-        document.getElementById('start-stream-btn').addEventListener('click', async () => {
-            if (!isAuthReady) {
-                showMessage("გთხოვთ, დაელოდოთ Firebase-ის ინიციალიზაციას.", true);
-                return;
-            }
-
-            const codeInput = document.getElementById('device-code-input');
-            const code = codeInput.value.trim();
-            const deviceStatus = document.getElementById('device-status');
+        // წაშლის ჩატის მონაცემებს, თუ ბოლო მომხმარებელმა დატოვა
+        async function checkAndCleanupChat(code) {
+            const presenceCollectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'chats', code, 'presence');
+            const chatDocRef = getChatDocRef(code);
             
-            // ვალიდაცია
-            if (code.length !== 4 || !/^\d{4}$/.test(code)) {
-                showMessage("❌ სტრიმის კოდი უნდა იყოს ზუსტად 4 ციფრი.", true);
-                return;
-            }
-            
-            // თუ უკვე გაშვებულია, შეაჩერე
-            if (streamInterval) {
-                clearInterval(streamInterval);
-                streamInterval = null;
-                deviceStatus.innerHTML = `<span class="status-indicator bg-red-500"></span> სტატუსი: შეჩერებულია (კოდი: ${code})`;
-                document.getElementById('start-stream-btn').textContent = "სტრიმინგის დაწყება (1 წამში 1 კადრი)";
-                showMessage(`✅ სტრიმინგი შეჩერებულია კოდისთვის ${code}.`, false);
-                return;
-            }
-            
-            // სტრიმინგის დაწყება
-            document.getElementById('start-stream-btn').textContent = "სტრიმინგის შეჩერება";
-            deviceStatus.innerHTML = `<span class="status-indicator bg-green-500"></span> სტატუსი: აქტიური (კოდი: ${code})`;
-            showMessage(`🚀 სტრიმინგი დაიწყო კოდით ${code}. Firestore განახლდება ყოველ წამში.`, false);
-
-            // Firestore დოკუმენტის ბილიკი: /artifacts/{appId}/public/data/streams/{code}
-            const streamDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'streams', code);
-
-            const updateStream = async () => {
-                const timestamp = Date.now();
-                const imageColor = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+            try {
+                // 1. შეამოწმეთ, არის თუ არა სხვა მომხმარებელი ჩატში
+                const presenceSnapshot = await getDocs(presenceCollectionRef);
                 
-                // სიმულირებული ახალი კადრი უნიკალური URL-ით
-                const imageUrl = `https://placehold.co/600x400/${imageColor.slice(1)}/ffffff?text=${code}_${new Date().toLocaleTimeString('ka-GE')}`;
+                // თუ presence კოლექცია ცარიელია, წაშალეთ ყველა შეტყობინება და მთავარი ჩატის დოკუმენტი
+                if (presenceSnapshot.empty) {
+                    showMessage(`
+                        <span class="material-icons mr-2 align-middle">delete_sweep</span> 
+                        ჩატი #${code} უმოქმედოა. მონაცემების წაშლა...
+                    `, false);
+                    
+                    const messagesCollectionRef = getMessagesCollectionRef(code);
+                    
+                    // Firestore-ის შეზღუდვების გამო, შეტყობინებების წასაშლელად უნდა წავიკითხოთ მათი ID-ები
+                    const messagesSnapshot = await getDocs(messagesCollectionRef);
+                    
+                    const batch = writeBatch(db);
+                    
+                    // 1. წაშალეთ შეტყობინებები
+                    messagesSnapshot.docs.forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
 
-                try {
-                    // მონაცემთა ჩაწერა, ძველის გადაწერა
-                    await setDoc(streamDocRef, {
-                        imageUrl: imageUrl,
-                        timestamp: timestamp,
-                        deviceId: code,
-                        uploaderUserId: auth.currentUser.uid
-                    }, { merge: true });
-                } catch (e) {
-                    console.error("Firestore-ის განახლების შეცდომა:", e);
-                    showMessage(`❌ კადრის განახლების შეცდომა: ${e.message}`, true);
-                    clearInterval(streamInterval);
-                    streamInterval = null;
-                    deviceStatus.innerHTML = `<span class="status-indicator bg-red-500"></span> სტატუსი: შეცდომა`;
+                    // 2. წაშალეთ მთავარი ჩატის დოკუმენტი (ეს აშორებს მას აქტიური ჩატების სიიდან)
+                    batch.delete(chatDocRef);
+                    
+                    await batch.commit();
+                    showMessage(`ჩატი #${code} წარმატებით წაიშალა.`, false);
+
                 }
-            };
+            } catch (e) {
+                console.error("ჩატის წაშლის შეცდომა:", e);
+                // თუ წაშლა ვერ მოხერხდა (მაგ. უსაფრთხოების წესების გამო), შეტყობინება
+                showMessage(`ჩატის წაშლისას მოხდა შეცდომა: ${e.message}. შეამოწმეთ Firestore-ის წესები.`, true);
+            }
+        }
 
-            // დაუყოვნებლივ განახლება და შემდეგ ინტერვალის დაყენება
-            await updateStream();
-            streamInterval = setInterval(updateStream, 1000); // ყოველ 1 წამში
+        // გადმოყავს მილიწამები დროის ხანგრძლივობაში (მაგ. 5 წუთის წინ)
+        function formatTimeSince(timestamp) {
+            const now = Date.now();
+            const seconds = Math.floor((now - timestamp) / 1000);
+            
+            if (seconds < 60) return `${seconds} წამის წინ`;
+            
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `${minutes} წუთის წინ`;
+            
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours} საათის წინ`;
+            
+            const days = Math.floor(hours / 24);
+            return `${days} დღის წინ`;
+        }
+        
+        // --- აქტიური ჩატების სიის მართვა ---
+
+        function setupActiveChatsListener() {
+            if (unsubscribeChats) unsubscribeChats(); // წინა მსმენელის გაუქმება
+
+            // ლისტინგი ხდება 'chats' კოლექციაზე
+            const chatsCollectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'chats');
+
+            unsubscribeChats = onSnapshot(chatsCollectionRef, (snapshot) => {
+                const activeChats = [];
+                snapshot.docs.forEach(doc => {
+                    // დოკუმენტის ID არის ჩატის კოდი
+                    if (doc.exists()) {
+                         const data = doc.data();
+                         // ვაგროვებთ კოდს და ბოლო აქტივობის დროს
+                         activeChats.push({
+                             code: doc.id,
+                             lastActivity: data.lastActivity // აქტივობის დრო
+                         });
+                    }
+                });
+                
+                renderActiveChats(activeChats);
+
+            }, (error) => {
+                console.error("აქტიური ჩატების ჩატვირთვის შეცდომა:", error);
+                document.getElementById('loading-chats-msg').innerHTML = '<span class="material-icons mr-2 align-middle">error</span> ჩატების ჩატვირთვის შეცდომა.';
+            });
+        }
+        
+        function renderActiveChats(chats) {
+            activeChatsList.innerHTML = '';
+            
+            // დალაგება ბოლო აქტივობის მიხედვით (ახალი პირველად)
+            chats.sort((a, b) => b.lastActivity - a.lastActivity);
+
+            if (chats.length === 0) {
+                activeChatsList.innerHTML = '<p class="text-sm text-gray-400"><span class="material-icons mr-1 align-middle text-yellow-500">info</span>ამჟამად აქტიური ჩატები არ არის. შექმენით ახალი!</p>';
+                return;
+            }
+
+            chats.forEach(chat => {
+                // აქტივობის დროის დაფორმატება
+                const timeSince = chat.lastActivity ? formatTimeSince(chat.lastActivity) : 'ახალი';
+
+                const chatItem = document.createElement('div');
+                chatItem.className = 'flex items-center active-chat-item p-3 rounded-lg w-full transition duration-150 ease-in-out transform hover:scale-[1.02] animate-popIn';
+                chatItem.onclick = () => {
+                    document.getElementById('chat-code-input').value = chat.code;
+                    joinChat(chat.code);
+                };
+
+                chatItem.innerHTML = `
+                    <span class="font-extrabold text-blue-100 text-lg mr-3">#${chat.code}</span>
+                    <span class="text-xs text-blue-300 ml-auto font-medium">${timeSince}</span>
+                `;
+                activeChatsList.appendChild(chatItem);
+            });
+        }
+
+        // --- აქტიური მომხმარებლების სია (Presence) ---
+
+        function setupPresenceListener(code) {
+            if (unsubscribePresence) unsubscribePresence(); 
+
+            const presenceCollectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'chats', code, 'presence');
+            
+            // Presence-ის ქუერი: დალაგება შესვლის დროით (უძველესი პირველად)
+            const q = query(presenceCollectionRef, orderBy('joined')); 
+
+            unsubscribePresence = onSnapshot(q, (snapshot) => {
+                const activeUsers = [];
+                snapshot.forEach(doc => {
+                    activeUsers.push({ id: doc.id, ...doc.data() });
+                });
+
+                renderActiveUsers(activeUsers);
+
+            }, (error) => {
+                console.error("Presence ჩატვირთვის შეცდომა:", error);
+                activeUsersList.innerHTML = '<p class="text-xs text-red-400 italic">მომხმარებლების ჩატვირთვის შეცდომა.</p>';
+            });
+        }
+
+        function renderActiveUsers(users) {
+            activeUsersList.innerHTML = '';
+            activeUserCount.textContent = users.length;
+
+            if (users.length === 0) {
+                 activeUsersList.innerHTML = '<p class="text-xs text-gray-400 italic">ჩატში არავინაა.</p>';
+                 return;
+            }
+
+            users.forEach(user => {
+                const isSelf = user.id === currentUserId;
+                const userItem = document.createElement('div');
+                userItem.className = `user-item flex items-center p-2 rounded-md ${isSelf ? 'user-item-self text-white' : 'text-gray-200'}`;
+
+                userItem.innerHTML = `
+                    <span class="material-icons text-sm mr-2 ${isSelf ? 'text-green-300' : 'text-blue-300'}">${isSelf ? 'face' : 'person_outline'}</span>
+                    <span class="font-medium truncate" title="${user.displayName}">${user.displayName}</span>
+                    <span class="ml-auto text-xs ${isSelf ? 'text-green-300' : 'text-gray-400'}">${isSelf ? '(თქვენ)' : ''}</span>
+                `;
+                activeUsersList.appendChild(userItem);
+            });
+        }
+
+
+        // --- ჩატში შესვლა / დატოვება ---
+        
+        async function joinChat(code) {
+            if (!isAuthReady) return showMessage("გთხოვთ, დაელოდოთ Firebase-ის ინიციალიზაციას.", true);
+            
+            // ნიკნეიმის აღება და გასუფთავება
+            const nickname = nicknameInput.value.trim().substring(0, 20) || `ანონიმური_მომხმარებელი_${currentUserId.substring(0, 4)}`;
+            currentDisplayName = nickname; // შეინახეთ გლობალურად შეტყობინებების გაგზავნისთვის
+
+            currentChatCode = code;
+            chatRoomTitle.innerHTML = `<span class="material-icons text-blue-500">forum</span> ჩატი #${code}`;
+            messagesContainer.innerHTML = '<p class="text-center italic mt-4"><span class="material-icons animate-spin-slow mr-2">sync</span> შეტყობინებების ჩატვირთვა...</p>';
+            toggleChatView(true);
+            
+            try {
+                const chatDocRef = getChatDocRef(code);
+                const presenceDocRef = getPresenceDocRef(code, currentUserId);
+
+                // 1. შექმენით/განაახლეთ მთავარი ჩატის დოკუმენტი (აუცილებელია სიისთვის)
+                await setDoc(chatDocRef, { 
+                    isActive: true, 
+                    lastActivity: Date.now() // განახლება, როცა მომხმარებელი შედის
+                }, { merge: true });
+                
+                // 2. Presence-ის დოკუმენტის შექმნა (ჩატში შესვლა)
+                await setDoc(presenceDocRef, { 
+                    joined: Date.now(), 
+                    userId: currentUserId, 
+                    displayName: currentDisplayName // იყენებს არჩეულ ნიკნეიმს
+                }, { merge: true });
+
+                showMessage(`
+                    <span class="material-icons mr-2 align-middle">celebration</span> 
+                    ჩატში #${code} წარმატებით შეხვედით, როგორც "${currentDisplayName}"!
+                `, false);
+                sendButton.disabled = false;
+                
+                // 3. onSnapshot-ის დაყენება შეტყობინებებისთვის
+                setupMessageListener(code);
+                // 4. ახალი: onSnapshot-ის დაყენება Presence-ისთვის
+                setupPresenceListener(code);
+
+            } catch (e) {
+                console.error("ჩატში შესვლის შეცდომა (Presence):", e);
+                showMessage(`ჩატში შესვლის შეცდომა: ${e.message}. შეამოწმეთ Firestore-ის წესები!`, true);
+                toggleChatView(false); 
+            }
+        }
+        
+        async function leaveChat() {
+            if (!currentChatCode) return;
+            
+            try {
+                // 1. წაშალეთ მომხმარებლის Presence დოკუმენტი
+                const presenceDocRef = getPresenceDocRef(currentChatCode, currentUserId);
+                await deleteDoc(presenceDocRef);
+                
+                // 2. შეაჩერეთ onSnapshot მსმენელები
+                if (unsubscribeMessages) {
+                    unsubscribeMessages();
+                    unsubscribeMessages = null;
+                }
+                if (unsubscribePresence) { // ახალი: Presence მსმენელის გათიშვა
+                    unsubscribePresence();
+                    unsubscribePresence = null;
+                }
+                
+                // 3. შეამოწმეთ და გაასუფთავეთ ჩატი
+                await checkAndCleanupChat(currentChatCode);
+                
+            } catch (e) {
+                console.error("ჩატის დატოვების შეცდომა:", e);
+                showMessage(`ჩატის დატოვების შეცდომა: ${e.message}`, true);
+            }
+            
+            // UI-ის განახლება
+            currentChatCode = null;
+            sendButton.disabled = true;
+            toggleChatView(false);
+            showMessage(`<span class="material-icons mr-2 align-middle">logout</span> თქვენ დატოვეთ ჩატი.`, false);
+        }
+        
+        // --- შეტყობინებების მართვა ---
+
+        function setupMessageListener(code) {
+            if (unsubscribeMessages) unsubscribeMessages(); // წინა მსმენელის გაუქმება
+
+            const messagesCollectionRef = getMessagesCollectionRef(code);
+            
+            // შეტყობინებების ქუერი: დალაგება თარიღით
+            const q = query(messagesCollectionRef, orderBy('timestamp'));
+
+            unsubscribeMessages = onSnapshot(q, (snapshot) => {
+                let firstLoad = messagesContainer.innerHTML.includes('ჩატვირთვა'); 
+                
+                if (firstLoad) {
+                    messagesContainer.innerHTML = ''; // Clear initial loading message
+                }
+
+                snapshot.docChanges().forEach(change => {
+                    if (change.type === "added") {
+                        const message = change.doc.data();
+                        displayMessage(message);
+                    }
+                });
+
+                // Scroll to bottom only if it was the first load or if the user is already near the bottom
+                if (firstLoad || messagesContainer.scrollHeight - messagesContainer.clientHeight <= messagesContainer.scrollTop + 100) {
+                     messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }
+
+
+                if (firstLoad) {
+                    showMessage(`ჩატის მონაცემები ჩაიტვირთა. ${snapshot.size} შეტყობინება.`, false);
+                }
+
+            }, (error) => {
+                console.error("onSnapshot შეცდომა:", error);
+                showMessage(`შეტყობინებების ჩატვირთვის შეცდომა: ${error.message}`, true);
+            });
+        }
+        
+        function displayMessage(message) {
+            const isUser = message.senderId === currentUserId;
+            const messageDiv = document.createElement('div');
+            
+            const senderName = message.displayName || `მომხმარებელი_${message.senderId.substring(0, 4)}`;
+            const time = new Date(message.timestamp).toLocaleTimeString('ka-GE', { hour: '2-digit', minute: '2-digit' });
+
+            messageDiv.className = `max-w-xs md:max-w-md p-3 text-sm shadow-md flex flex-col ${isUser ? 'message-bubble-user ml-auto' : 'message-bubble-other mr-auto'} animate-slideInUp`;
+            
+            messageDiv.innerHTML = `
+                <span class="font-bold text-xs ${isUser ? 'text-blue-200' : 'text-gray-300'}">${isUser ? 'თქვენ' : senderName}:</span>
+                <span class="text-base break-words">${message.text}</span>
+                <span class="text-xs self-end mt-1 ${isUser ? 'text-blue-300' : 'text-gray-400'}">${time}</span>
+            `;
+
+            messagesContainer.appendChild(messageDiv);
+        }
+
+        async function sendMessage() {
+            if (!currentChatCode || !messageInput.value.trim()) return;
+
+            const text = messageInput.value.trim();
+            messageInput.value = '';
+            sendButton.disabled = true;
+
+            try {
+                const messagesCollectionRef = getMessagesCollectionRef(currentChatCode);
+                
+                // 1. შეტყობინების გაგზავნა
+                await addDoc(messagesCollectionRef, {
+                    text: text,
+                    senderId: currentUserId,
+                    displayName: currentDisplayName, // იყენებს გლობალურად შენახულ სახელს
+                    timestamp: Date.now()
+                });
+
+                // 2. მთავარი ჩატის დოკუმენტის აქტივობის დროის განახლება (სიის განახლებისთვის)
+                const chatDocRef = getChatDocRef(currentChatCode);
+                await setDoc(chatDocRef, { 
+                    lastActivity: Date.now() 
+                }, { merge: true });
+
+            } catch (e) {
+                console.error("შეტყობინების გაგზავნის შეცდომა:", e);
+                showMessage(`შეტყობინების გაგზავნის შეცდომა: ${e.message}`, true);
+            } finally {
+                sendButton.disabled = false;
+                messageInput.focus();
+            }
+        }
+
+
+        // --- Event Listeners ---
+        
+        document.getElementById('chat-code-input').addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[^0-9]/g, ''); // Only allow digits
         });
 
-        // --- მნახველის ლოგიკა (Viewer) ---
-
-        document.getElementById('view-stream-btn').addEventListener('click', () => {
-            if (!isAuthReady) {
-                showMessage("გთხოვთ, დაელოდოთ Firebase-ის ინიციალიზაციას.", true);
-                return;
-            }
-
-            const codeInput = document.getElementById('viewer-code-input');
+        document.getElementById('join-chat-btn').addEventListener('click', () => {
+            const codeInput = document.getElementById('chat-code-input');
             const code = codeInput.value.trim();
-            const streamImage = document.getElementById('stream-image');
-            const viewerStatus = document.getElementById('viewer-status');
-
-            // ვალიდაცია
-            if (code.length !== 4 || !/^\d{4}$/.test(code)) {
-                showMessage("❌ კოდი უნდა იყოს ზუსტად 4 ციფრი.", true);
-                return;
+            
+            if (code.length === 3 && /^\d{3}$/.test(code)) {
+                joinChat(code);
+            } else {
+                showMessage(`ჩატის კოდი უნდა იყოს ზუსტად 3 ციფრი.`, true);
             }
+        });
 
-            // წინა onSnapshot-ის გაუქმება
-            if (unsubscribeViewer) {
-                unsubscribeViewer();
-                viewerStatus.textContent = `წინა სტრიმინგი შეჩერდა.`;
-                streamImage.src = 'https://placehold.co/600x400/CCCCCC/666666?text=დაელოდეთ+კადრს';
+        document.getElementById('leave-chat-btn').addEventListener('click', leaveChat);
+        
+        sendButton.addEventListener('click', sendMessage);
+        
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !sendButton.disabled) {
+                sendMessage();
             }
-
-            // Firestore დოკუმენტის ბილიკი
-            const streamDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'streams', code);
-
-            // onSnapshot-ის დაყენება რეალურ დროში მონაცემების მისაღებად
-            unsubscribeViewer = onSnapshot(streamDocRef, (docSnapshot) => {
-                if (docSnapshot.exists()) {
-                    const data = docSnapshot.data();
-                    if (data && data.imageUrl) {
-                        // სურათის განახლება
-                        streamImage.src = data.imageUrl;
-                        viewerStatus.textContent = `✅ სტრიმი კოდით ${code} აქტიურია. ბოლო განახლება: ${new Date(data.timestamp).toLocaleTimeString('ka-GE')}`;
-                    } else {
-                        viewerStatus.textContent = `⚠️ სტრიმი ${code} ნაპოვნია, მაგრამ კადრის მონაცემები ცარიელია.`;
-                    }
-                } else {
-                    // თუ დოკუმენტი არ არსებობს (სტრიმი არ არის დაწყებული)
-                    streamImage.src = 'https://placehold.co/600x400/CC0000/FFFFFF?text=სტრიმი+არ+მოიძებნა';
-                    viewerStatus.textContent = `❌ სტრიმი კოდით ${code} არ არის დაწყებული.`;
-                }
-            }, (error) => {
-                console.error("onSnapshot-ის შეცდომა:", error);
-                showMessage(`❌ სტრიმის დაკავშირების შეცდომა: ${error.message}`, true);
-                viewerStatus.textContent = `❌ შეცდომა სტრიმის დაკავშირებისას.`;
-                if (unsubscribeViewer) unsubscribeViewer();
-            });
-
-            showMessage(`👀 სტრიმინგზე დაკავშირება კოდით ${code}...`, false);
         });
 
         // აპლიკაციის დაწყება
         initializeFirebase();
 
     </script>
+    <!-- Firestore Security Rules (Update this in your Firebase Console) -->
+    <!--
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Checks if the user is authenticated (including anonymously)
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // --- Temporary Group Chat Rules: Public Data ---
+    // Path: /artifacts/{appId}/public/data/chats/{code}
+
+    match /artifacts/{appId}/public/data/chats/{code} {
+        // Read is allowed for listing active chats.
+        allow read: if isAuthenticated();
+        // Create/Update allowed for joining a chat and updating last activity.
+        allow create, update: if isAuthenticated();
+        // Delete is allowed for the cleanup process when the last user leaves.
+        // WARNING: This rule allows any authenticated user to delete any chat document.
+        // The client-side logic in `checkAndCleanupChat` is responsible for
+        // verifying that the chat is empty before attempting deletion.
+        // For stronger security and guaranteed enforcement of emptiness before deletion,
+        // consider implementing this cleanup via a Cloud Function.
+        allow delete: if isAuthenticated();
+    }
+
+    // 1. Messages Subcollection (sending messages)
+    match /artifacts/{appId}/public/data/chats/{code}/messages/{messageId} {
+        // Read is allowed for all authenticated users in the chat.
+        allow read: if isAuthenticated();
+
+        // Create (send new message) is allowed only if:
+        allow create: if isAuthenticated()
+            // 1. All required fields exist
+            && request.resource.data.keys().hasAll(['text', 'senderId', 'timestamp', 'displayName'])
+            // 2. The sender's ID matches the authenticated user's ID
+            && request.resource.data.senderId == request.auth.uid
+            // 3. The message text is a string
+            && request.resource.data.text is string;
+
+        // Delete is allowed as part of the chat cleanup batch operation.
+        // WARNING: This rule allows any authenticated user to delete any message.
+        // The client-side logic in `checkAndCleanupChat` is responsible for
+        // ensuring this deletion is part of a valid chat cleanup.
+        // For stronger security, consider implementing this cleanup via a Cloud Function.
+        allow delete: if isAuthenticated();
+
+        // Update is not allowed for messages.
+        allow update: if false;
+    }
+
+    // 2. Presence Subcollection (tracking active users)
+    match /artifacts/{appId}/public/data/chats/{code}/presence/{userId} {
+        // Read is allowed (to see other users).
+        allow read: if isAuthenticated();
+
+        // Write/Delete is allowed only for a user's own Presence document.
+        allow write, delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // --- Private Data (standard security rule) ---
+    match /artifacts/{appId}/users/{userId}/{document=**} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+  }
+}
+-->
 </body>
 </html>
