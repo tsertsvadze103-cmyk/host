@@ -96,20 +96,39 @@
 
     <!-- Firebase SDK-ების იმპორტი -->
     <script type="module">
+        // Firebase-ის საჭირო მოდულების იმპორტი
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, getDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase-ის კონფიგურაცია და ინიციალიზაცია
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { /* Mock config */ };
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        // --- Firebase კონფიგურაცია ---
+
+        // Firebase-ის კონფიგურაციის მონაცემები (თქვენს მიერ მოწოდებული)
+        const hardcodedConfig = {
+            apiKey: "AIzaSyAB2FnGzm-vRFzjzMFc5fSqIx4JFhtSZHg",
+            authDomain: "hostsite-87e89.firebaseapp.com",
+            projectId: "hostsite-87e89",
+            storageBucket: "hostsite-87e89.firebasestorage.app",
+            messagingSenderId: "594577784773",
+            appId: "1:594577784773:web:16b148cc0bc00999ebd5ac"
+        };
+        
+        // გლობალური ცვლადების გამოყენება, თუ ხელმისაწვდომია, წინააღმდეგ შემთხვევაში hardcoded config-ის გამოყენება.
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : hardcodedConfig;
+        
+        // App ID-ის განსაზღვრა
+        const appId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.projectId; 
+        
+        // საწყისი ავთენტიფიკაციის ტოკენი
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         let db;
         let auth;
-        let streamInterval = null;
-        let unsubscribeViewer = null;
-        let isAuthReady = false;
+        let streamInterval = null; // სტრიმინგის ინტერვალი
+        let unsubscribeViewer = null; // მნახველის onSnapshot ფუნქცია
+        let isAuthReady = false; // ავთენტიფიკაციის სტატუსი
+
+        // --- UI ფუნქციები ---
 
         // შეტყობინებების ჩვენება UI-ზე
         function showMessage(text, isError = false) {
@@ -117,38 +136,39 @@
             box.textContent = text;
             box.className = 'mb-6 p-4 rounded-lg text-sm block font-medium';
             if (isError) {
-                box.classList.add('bg-red-100', 'text-red-700', 'border', 'border-red-400');
+                box.classList.add('bg-red-100', 'text-red-700', 'border', 'border-red-400', 'shadow-md');
             } else {
-                box.classList.add('bg-blue-100', 'text-blue-700', 'border', 'border-blue-400');
+                box.classList.add('bg-blue-100', 'text-blue-700', 'border', 'border-blue-400', 'shadow-md');
             }
         }
 
-        // Firebase-ის ინიციალიზაცია და ავთენტიფიკაცია
+        // --- Firebase ინიციალიზაცია და ავთენტიფიკაცია ---
+
         async function initializeFirebase() {
             try {
-                // setLogLevel('Debug'); // გამართვისთვის
-
+                // ინიციალიზაცია
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
 
-                // ავთენტიფიკაცია
+                // ავთენტიფიკაცია: ვიყენებთ ტოკენს, თუ მოწოდებულია, წინააღმდეგ შემთხვევაში - ანონიმურ შესვლას.
                 if (initialAuthToken) {
                     await signInWithCustomToken(auth, initialAuthToken);
-                    showMessage("✅ ავთენტიფიკაცია წარმატებით დასრულდა (მომხმარებლის ტოკენით).");
+                    showMessage("✅ Firebase ავთენტიფიკაცია წარმატებით დასრულდა (მომხმარებლის ტოკენით).");
                 } else {
                     await signInAnonymously(auth);
-                    showMessage("✅ ავთენტიფიკაცია წარმატებით დასრულდა (ანონიმურად).");
+                    showMessage("✅ Firebase ავთენტიფიკაცია წარმატებით დასრულდა (ანონიმურად).");
                 }
                 isAuthReady = true;
 
             } catch (error) {
                 console.error("Firebase-ის ინიციალიზაციის ან ავთენტიფიკაციის შეცდომა:", error);
-                showMessage(`❌ Firebase-ის ინიციალიზაციის შეცდომა: ${error.message}`, true);
+                showMessage(`❌ Firebase-ის ინიციალიზაციის შეცდომა: ${error.message}. შეამოწმეთ კონფიგურაცია.`, true);
             }
         }
 
-        // მოწყობილობის სიმულატორის ლოგიკა
+        // --- მოწყობილობის სიმულატორის ლოგიკა (Uploader) ---
+
         document.getElementById('start-stream-btn').addEventListener('click', async () => {
             if (!isAuthReady) {
                 showMessage("გთხოვთ, დაელოდოთ Firebase-ის ინიციალიზაციას.", true);
@@ -158,28 +178,29 @@
             const codeInput = document.getElementById('device-code-input');
             const code = codeInput.value.trim();
             const deviceStatus = document.getElementById('device-status');
-            const deviceLight = document.getElementById('device-light');
-
+            
+            // ვალიდაცია
             if (code.length !== 4 || !/^\d{4}$/.test(code)) {
-                showMessage("❌ კოდი უნდა იყოს ზუსტად 4 ციფრი.", true);
+                showMessage("❌ სტრიმის კოდი უნდა იყოს ზუსტად 4 ციფრი.", true);
                 return;
             }
             
-            // შეჩერება თუ უკვე გაშვებულია
+            // თუ უკვე გაშვებულია, შეაჩერე
             if (streamInterval) {
                 clearInterval(streamInterval);
                 streamInterval = null;
-                deviceStatus.innerHTML = `<span class="status-indicator bg-red-500" id="device-light"></span> სტატუსი: შეჩერებულია (კოდი: ${code})`;
+                deviceStatus.innerHTML = `<span class="status-indicator bg-red-500"></span> სტატუსი: შეჩერებულია (კოდი: ${code})`;
                 document.getElementById('start-stream-btn').textContent = "სტრიმინგის დაწყება (1 წამში 1 კადრი)";
                 showMessage(`✅ სტრიმინგი შეჩერებულია კოდისთვის ${code}.`, false);
                 return;
             }
             
-            // დაწყება
+            // სტრიმინგის დაწყება
             document.getElementById('start-stream-btn').textContent = "სტრიმინგის შეჩერება";
-            deviceStatus.innerHTML = `<span class="status-indicator bg-green-500" id="device-light"></span> სტატუსი: აქტიური (კოდი: ${code})`;
-            showMessage(`🚀 სტრიმინგი დაიწყო კოდით ${code}.`, false);
+            deviceStatus.innerHTML = `<span class="status-indicator bg-green-500"></span> სტატუსი: აქტიური (კოდი: ${code})`;
+            showMessage(`🚀 სტრიმინგი დაიწყო კოდით ${code}. Firestore განახლდება ყოველ წამში.`, false);
 
+            // Firestore დოკუმენტის ბილიკი: /artifacts/{appId}/public/data/streams/{code}
             const streamDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'streams', code);
 
             const updateStream = async () => {
@@ -190,14 +211,13 @@
                 const imageUrl = `https://placehold.co/600x400/${imageColor.slice(1)}/ffffff?text=${code}_${new Date().toLocaleTimeString('ka-GE')}`;
 
                 try {
-                    // setDoc გამოიყენება არსებული დოკუმენტის გადასაწერად (ან ახლის შესაქმნელად)
+                    // მონაცემთა ჩაწერა, ძველის გადაწერა
                     await setDoc(streamDocRef, {
                         imageUrl: imageUrl,
                         timestamp: timestamp,
                         deviceId: code,
                         uploaderUserId: auth.currentUser.uid
                     }, { merge: true });
-                    // console.log(`კადრი განახლდა კოდისთვის ${code}`);
                 } catch (e) {
                     console.error("Firestore-ის განახლების შეცდომა:", e);
                     showMessage(`❌ კადრის განახლების შეცდომა: ${e.message}`, true);
@@ -207,12 +227,13 @@
                 }
             };
 
-            // დაუყოვნებლივ განახლება და შემდეგ ინტერვალი
+            // დაუყოვნებლივ განახლება და შემდეგ ინტერვალის დაყენება
             await updateStream();
             streamInterval = setInterval(updateStream, 1000); // ყოველ 1 წამში
         });
 
-        // მნახველის ლოგიკა
+        // --- მნახველის ლოგიკა (Viewer) ---
+
         document.getElementById('view-stream-btn').addEventListener('click', () => {
             if (!isAuthReady) {
                 showMessage("გთხოვთ, დაელოდოთ Firebase-ის ინიციალიზაციას.", true);
@@ -224,21 +245,23 @@
             const streamImage = document.getElementById('stream-image');
             const viewerStatus = document.getElementById('viewer-status');
 
+            // ვალიდაცია
             if (code.length !== 4 || !/^\d{4}$/.test(code)) {
                 showMessage("❌ კოდი უნდა იყოს ზუსტად 4 ციფრი.", true);
                 return;
             }
 
-            // წინა onSnapshot-ის გაუქმება, თუ არსებობს
+            // წინა onSnapshot-ის გაუქმება
             if (unsubscribeViewer) {
                 unsubscribeViewer();
                 viewerStatus.textContent = `წინა სტრიმინგი შეჩერდა.`;
                 streamImage.src = 'https://placehold.co/600x400/CCCCCC/666666?text=დაელოდეთ+კადრს';
             }
 
+            // Firestore დოკუმენტის ბილიკი
             const streamDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'streams', code);
 
-            // onSnapshot-ის დაყენება რეალურ დროში განახლებისთვის
+            // onSnapshot-ის დაყენება რეალურ დროში მონაცემების მისაღებად
             unsubscribeViewer = onSnapshot(streamDocRef, (docSnapshot) => {
                 if (docSnapshot.exists()) {
                     const data = docSnapshot.data();
@@ -247,7 +270,7 @@
                         streamImage.src = data.imageUrl;
                         viewerStatus.textContent = `✅ სტრიმი კოდით ${code} აქტიურია. ბოლო განახლება: ${new Date(data.timestamp).toLocaleTimeString('ka-GE')}`;
                     } else {
-                        viewerStatus.textContent = `⚠️ სტრიმი ${code} ნაპოვნია, მაგრამ კადრის მისამართი ცარიელია.`;
+                        viewerStatus.textContent = `⚠️ სტრიმი ${code} ნაპოვნია, მაგრამ კადრის მონაცემები ცარიელია.`;
                     }
                 } else {
                     // თუ დოკუმენტი არ არსებობს (სტრიმი არ არის დაწყებული)
@@ -256,7 +279,7 @@
                 }
             }, (error) => {
                 console.error("onSnapshot-ის შეცდომა:", error);
-                showMessage(`❌ სტრიმის ნახვის შეცდომა: ${error.message}`, true);
+                showMessage(`❌ სტრიმის დაკავშირების შეცდომა: ${error.message}`, true);
                 viewerStatus.textContent = `❌ შეცდომა სტრიმის დაკავშირებისას.`;
                 if (unsubscribeViewer) unsubscribeViewer();
             });
