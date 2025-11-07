@@ -3,293 +3,270 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HTML სკრიპტის ვიზუალიზატორი</title>
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <title>ლაივ სტრიმინგის სიმულატორი</title>
+    <!-- Tailwind CSS-ის ჩატვირთვა სტილისთვის -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter ფონტის გამოყენება -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Custom scrollbar styles */
-        textarea::-webkit-scrollbar { width: 8px; }
-        textarea::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
-        textarea::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        textarea::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        /* Style for full-screen view */
-        .view-mode {
-             margin: 0;
-             padding: 0;
-             overflow: hidden;
-             display: flex;
-             align-items: center;
-             justify-content: center;
-             min-height: 100vh;
-             background-color: white; /* Clean background for viewer */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+        }
+        .card {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background-color: #4f46e5;
+            transition: background-color 0.3s;
+        }
+        .btn-primary:hover {
+            background-color: #4338ca;
+        }
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 text-gray-800 font-sans antialiased min-h-screen flex flex-col items-center justify-center py-12 px-4">
-    
-    <div id="auth-section" class="max-w-md w-full bg-white shadow-xl rounded-xl p-8 mb-8" style="display: none;">
-        <h2 class="text-2xl font-bold text-center text-indigo-600 mb-6">🚪 რეგისტრაცია / შესვლა</h2>
-        <form id="register-form" class="space-y-4">
-            <div>
-                <label for="email" class="block text-sm font-medium text-gray-700">ელ. ფოსტა:</label>
-                <input type="email" id="email" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-            </div>
-            <div>
-                <label for="password" class="block text-sm font-medium text-gray-700">პაროლი:</label>
-                <input type="password" id="password" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-            </div>
-            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md transition duration-150 ease-in-out">
-                რეგისტრაცია / შესვლა
-            </button>
-            <p id="auth-message" class="text-center text-sm mt-3"></p>
-        </form>
-    </div>
+<body class="min-h-screen p-4 md:p-8">
 
-    <div id="main-content" class="max-w-4xl w-full bg-white shadow-2xl rounded-xl p-8 md:p-10 lg:p-12 space-y-8 transform transition-opacity duration-500" style="opacity: 0; display: none;">
-
-        <header class="text-center space-y-4">
-            <div class="flex items-center justify-center text-indigo-600 mb-2">
-                <span class="material-icons text-5xl md:text-6xl">code</span>
-            </div>
-            <h1 class="text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 leading-tight">
-                <span class="text-indigo-600">HTML</span> სკრიპტის ვიზუალიზატორი
-            </h1>
-            <p id="welcome-message" class="text-xl text-green-600 font-semibold max-w-2xl mx-auto">
-                კეთილი იყოს თქვენი მობრძანება!
-            </p>
+    <div id="app" class="max-w-6xl mx-auto">
+        <header class="text-center mb-10 p-4 bg-white rounded-xl shadow-lg">
+            <h1 class="text-4xl font-extrabold text-gray-800">🌐 ლაივ სტრიმინგის სიმულატორი</h1>
+            <p class="text-gray-500 mt-2">გამოიყენეთ 4-ციფრიანი კოდი სტრიმინგის დასაწყებად ან სანახავად.</p>
         </header>
 
-        <section class="space-y-6">
-             <div class="flex justify-end">
-                <button id="logout-button" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-3 rounded-full text-sm">
-                    გასვლა
-                </button>
-            </div>
-            <div class="relative">
-                <label for="html-input" class="block text-gray-700 text-lg font-semibold mb-2 flex items-center">
-                    <span class="material-icons text-indigo-500 mr-2">edit_note</span>
-                    ჩასვით თქვენი HTML კოდი აქ:
-                </label>
-                <textarea
-                    id="html-input"
-                    class="w-full p-4 border-2 border-indigo-300 rounded-lg focus:ring-4 focus:ring-indigo-200 focus:border-indigo-500 transition-all duration-200 ease-in-out text-gray-800 text-base font-mono bg-gray-50 resize-y min-h-[200px] md:min-h-[250px] shadow-sm"
-                    placeholder="<div>
-    <h1 style='color: #2563eb;'>გამარჯობა მსოფლიო!</h1>
-    <p>ეს არის თქვენი დინამიურად გენერირებული კონტენტი.</p>
-</div>"
-                    rows="10"
-                ></textarea>
-            </div>
-            <div class="flex flex-col items-center space-y-4">
-                <button
-                    id="render-button"
-                    class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-full shadow-lg flex items-center justify-center transform hover:scale-105 transition-all duration-300 ease-in-out focus:outline-none focus:ring-4 focus:ring-green-300"
-                >
-                    <span class="material-icons mr-2">save</span>
-                    კოდის შენახვა და მუდმივი ლინკის გენერირება
-                </button>
-                <p id="link-message" class="text-gray-700 text-base font-medium hidden">
-                    ✅ ლინკი გენერირებულია: <a id="share-link" href="#" target="_blank" class="text-indigo-600 hover:text-indigo-800 underline font-mono break-all"></a>
-                </p>
-            </div>
-        </section>
+        <!-- სტატუსის შეტყობინებები -->
+        <div id="message-box" class="mb-6 p-4 rounded-lg text-sm hidden" role="alert"></div>
 
+        <div class="grid md:grid-cols-2 gap-8">
+
+            <!-- 1. მოწყობილობის სტრიმინგის სიმულატორი (Uploader) -->
+            <div class="card bg-white p-6 rounded-xl border border-blue-100">
+                <h2 class="text-2xl font-bold mb-4 text-blue-700">📸 მოწყობილობა: სტრიმინგის დაწყება</h2>
+                
+                <div class="mb-4">
+                    <label for="device-code-input" class="block text-gray-600 font-medium mb-1">4-ციფრიანი კოდი (მაგ: 1010)</label>
+                    <input type="text" id="device-code-input" maxlength="4" placeholder="ჩაწერეთ კოდი" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-lg">
+                </div>
+                
+                <button id="start-stream-btn" class="w-full btn-primary text-white font-semibold py-3 rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-300 transition duration-150 ease-in-out">
+                    სტრიმინგის დაწყება (1 წამში 1 კადრი)
+                </button>
+
+                <p id="device-status" class="mt-4 text-sm font-semibold p-3 rounded-lg bg-gray-100 text-gray-600">
+                    <span class="status-indicator bg-red-500" id="device-light"></span>
+                    სტატუსი: უმოქმედო
+                </p>
+
+                <div class="mt-4 p-3 bg-blue-50 border-l-4 border-blue-500 text-blue-700 text-sm rounded-lg">
+                    <p>⚠️ **მნიშვნელოვანია**: სტრიმინგი მუშაობს მხოლოდ მაშინ, როცა ეს გვერდი ღიაა. ყოველ წამში ხდება Firestore-ის დოკუმენტის განახლება.</p>
+                </div>
+            </div>
+
+            <!-- 2. მნახველი (Viewer) -->
+            <div class="card bg-white p-6 rounded-xl border border-green-100">
+                <h2 class="text-2xl font-bold mb-4 text-green-700">📺 მნახველი: სტრიმინგის ნახვა</h2>
+                
+                <div class="mb-4">
+                    <label for="viewer-code-input" class="block text-gray-600 font-medium mb-1">4-ციფრიანი კოდი</label>
+                    <input type="text" id="viewer-code-input" maxlength="4" placeholder="ჩაწერეთ სტრიმის კოდი" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-lg">
+                </div>
+                
+                <button id="view-stream-btn" class="w-full bg-green-500 text-white font-semibold py-3 rounded-lg shadow-md hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-300 transition duration-150 ease-in-out">
+                    სტრიმინგის ნახვა
+                </button>
+
+                <div class="mt-6 border-t pt-4">
+                    <h3 class="text-xl font-semibold mb-3 text-gray-700">მიმდინარე კადრი:</h3>
+                    <div id="image-container" class="w-full bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center aspect-video">
+                        <img id="stream-image" src="https://placehold.co/600x400/CCCCCC/666666?text=დაელოდეთ+კადრს" alt="ლაივ სტრიმინგის კადრი" class="w-full h-full object-cover">
+                    </div>
+                    <p id="viewer-status" class="mt-3 text-sm font-medium text-gray-500 text-center">კოდის შეყვანის შემდეგ დააჭირეთ 'სტრიმინგის ნახვა'-ს.</p>
+                </div>
+            </div>
+
+        </div>
     </div>
 
+    <!-- Firebase SDK-ების იმპორტი -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
-        
-        // !!! შეცვალეთ ეს თქვენი კონფიგურაციით !!!
-        const firebaseConfig = {
-            apiKey: "AIzaSyAB2FnGzm-vRFzjzMFc5fSqIx4JFhtSZHg", 
-            authDomain: "hostsite-87e89.firebaseapp.com",
-            projectId: "hostsite-87e89",
-            storageBucket: "hostsite-87e89.firebasestorage.app",
-            messagingSenderId: "594577784773",
-            appId: "1:594577784773:web:16b148cc0bc00999ebd5ac"
-        };
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, getDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // ინიციალიზაცია
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app); 
+        // Firebase-ის კონფიგურაცია და ინიციალიზაცია
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { /* Mock config */ };
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        // DOM ელემენტები
-        const authSection = document.getElementById('auth-section');
-        const mainContent = document.getElementById('main-content');
-        const registerForm = document.getElementById('register-form');
-        const authMessage = document.getElementById('auth-message');
-        const welcomeMessage = document.getElementById('welcome-message');
-        const logoutButton = document.getElementById('logout-button');
-        const htmlInput = document.getElementById('html-input');
-        const renderButton = document.getElementById('render-button');
-        const linkMessage = document.getElementById('link-message');
-        const shareLink = document.getElementById('share-link');
+        let db;
+        let auth;
+        let streamInterval = null;
+        let unsubscribeViewer = null;
+        let isAuthReady = false;
 
-
-        // --- 1. კოდის ჩვენების ლოგიკა (/view/ID მისამართებისთვის) ---
-        async function fetchAndRenderHtml(id) {
-            
-            // ვცვლით body-ის სტილს, რათა ვიზუალიზატორი იყოს სუფთა
-            document.body.className = 'view-mode';
-            document.body.innerHTML = '<h1>კოდის ჩატვირთვა...</h1><p>მიმდინარეობს Firestore-თან დაკავშირება...</p>';
-
-            try {
-                const docRef = doc(db, "html_scripts", id);
-                const docSnap = await getDoc(docRef);
-
-                if (docSnap.exists()) {
-                    const htmlContent = docSnap.data().html;
-                    
-                    if (!htmlContent) {
-                         document.body.innerHTML = '<h1>❌ ცარიელი მონაცემები</h1><p>Firestore-ში კოდი ცარიელია.</p>';
-                         return;
-                    }
-
-                    // ვქმნით უსაფრთხო IFRAME-ს HTML კონტენტის გასაშვებად
-                    const iframe = document.createElement('iframe');
-                    iframe.style.width = '100%';
-                    iframe.style.height = '100vh';
-                    iframe.style.border = 'none';
-                    iframe.style.margin = '0';
-                    iframe.style.padding = '0';
-                    
-                    document.body.innerHTML = ''; 
-                    document.body.appendChild(iframe);
-                    
-                    const iframeDoc = iframe.contentWindow.document;
-                    iframeDoc.open();
-                    iframeDoc.write(htmlContent); 
-                    iframeDoc.close();
-                    
-                } else {
-                    document.body.innerHTML = '<h1>❌ ვერ მოიძებნა</h1><p>კოდი ამ ID-ით არ არსებობს.</p>';
-                }
-            } catch (error) {
-                 document.body.innerHTML = `<h1>❌ შეცდომა</h1><p>ვერ ხერხდება მონაცემთა წამოღება: ${error.message}</p>`;
-            }
-        }
-        
-        // --- 2. URL-ის შემოწმება და გაშვების კონტროლი ---
-        const path = window.location.pathname;
-        const isViewPage = path.startsWith('/view/');
-        
-        if (isViewPage) {
-            const docId = path.split('/')[2];
-            if (docId) {
-                fetchAndRenderHtml(docId);
-                return; // ვაჩერებთ მთელ დანარჩენ ლოგიკას!
-            }
-        }
-
-        // --- 3. რეგულარული აპლიკაციის ლოგიკა (მხოლოდ მთავარი გვერდისთვის) ---
-        
-        // ავთენტიფიკაციის სტატუსის მართვა
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                authSection.style.display = 'none';
-                mainContent.style.opacity = '1';
-                mainContent.style.display = 'block';
-                welcomeMessage.textContent = `კეთილი იყოს თქვენი მობრძანება, ${user.email}! (შესული ხართ)`;
+        // შეტყობინებების ჩვენება UI-ზე
+        function showMessage(text, isError = false) {
+            const box = document.getElementById('message-box');
+            box.textContent = text;
+            box.className = 'mb-6 p-4 rounded-lg text-sm block font-medium';
+            if (isError) {
+                box.classList.add('bg-red-100', 'text-red-700', 'border', 'border-red-400');
             } else {
-                authSection.style.display = 'block';
-                mainContent.style.opacity = '0';
-                mainContent.style.display = 'none';
-                welcomeMessage.textContent = `კეთილი იყოს თქვენი მობრძანება! (გასული ხართ)`;
+                box.classList.add('bg-blue-100', 'text-blue-700', 'border', 'border-blue-400');
             }
+        }
+
+        // Firebase-ის ინიციალიზაცია და ავთენტიფიკაცია
+        async function initializeFirebase() {
+            try {
+                // setLogLevel('Debug'); // გამართვისთვის
+
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                // ავთენტიფიკაცია
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                    showMessage("✅ ავთენტიფიკაცია წარმატებით დასრულდა (მომხმარებლის ტოკენით).");
+                } else {
+                    await signInAnonymously(auth);
+                    showMessage("✅ ავთენტიფიკაცია წარმატებით დასრულდა (ანონიმურად).");
+                }
+                isAuthReady = true;
+
+            } catch (error) {
+                console.error("Firebase-ის ინიციალიზაციის ან ავთენტიფიკაციის შეცდომა:", error);
+                showMessage(`❌ Firebase-ის ინიციალიზაციის შეცდომა: ${error.message}`, true);
+            }
+        }
+
+        // მოწყობილობის სიმულატორის ლოგიკა
+        document.getElementById('start-stream-btn').addEventListener('click', async () => {
+            if (!isAuthReady) {
+                showMessage("გთხოვთ, დაელოდოთ Firebase-ის ინიციალიზაციას.", true);
+                return;
+            }
+
+            const codeInput = document.getElementById('device-code-input');
+            const code = codeInput.value.trim();
+            const deviceStatus = document.getElementById('device-status');
+            const deviceLight = document.getElementById('device-light');
+
+            if (code.length !== 4 || !/^\d{4}$/.test(code)) {
+                showMessage("❌ კოდი უნდა იყოს ზუსტად 4 ციფრი.", true);
+                return;
+            }
+            
+            // შეჩერება თუ უკვე გაშვებულია
+            if (streamInterval) {
+                clearInterval(streamInterval);
+                streamInterval = null;
+                deviceStatus.innerHTML = `<span class="status-indicator bg-red-500" id="device-light"></span> სტატუსი: შეჩერებულია (კოდი: ${code})`;
+                document.getElementById('start-stream-btn').textContent = "სტრიმინგის დაწყება (1 წამში 1 კადრი)";
+                showMessage(`✅ სტრიმინგი შეჩერებულია კოდისთვის ${code}.`, false);
+                return;
+            }
+            
+            // დაწყება
+            document.getElementById('start-stream-btn').textContent = "სტრიმინგის შეჩერება";
+            deviceStatus.innerHTML = `<span class="status-indicator bg-green-500" id="device-light"></span> სტატუსი: აქტიური (კოდი: ${code})`;
+            showMessage(`🚀 სტრიმინგი დაიწყო კოდით ${code}.`, false);
+
+            const streamDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'streams', code);
+
+            const updateStream = async () => {
+                const timestamp = Date.now();
+                const imageColor = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+                
+                // სიმულირებული ახალი კადრი უნიკალური URL-ით
+                const imageUrl = `https://placehold.co/600x400/${imageColor.slice(1)}/ffffff?text=${code}_${new Date().toLocaleTimeString('ka-GE')}`;
+
+                try {
+                    // setDoc გამოიყენება არსებული დოკუმენტის გადასაწერად (ან ახლის შესაქმნელად)
+                    await setDoc(streamDocRef, {
+                        imageUrl: imageUrl,
+                        timestamp: timestamp,
+                        deviceId: code,
+                        uploaderUserId: auth.currentUser.uid
+                    }, { merge: true });
+                    // console.log(`კადრი განახლდა კოდისთვის ${code}`);
+                } catch (e) {
+                    console.error("Firestore-ის განახლების შეცდომა:", e);
+                    showMessage(`❌ კადრის განახლების შეცდომა: ${e.message}`, true);
+                    clearInterval(streamInterval);
+                    streamInterval = null;
+                    deviceStatus.innerHTML = `<span class="status-indicator bg-red-500"></span> სტატუსი: შეცდომა`;
+                }
+            };
+
+            // დაუყოვნებლივ განახლება და შემდეგ ინტერვალი
+            await updateStream();
+            streamInterval = setInterval(updateStream, 1000); // ყოველ 1 წამში
         });
 
-        // რეგისტრაცია / შესვლის ლოგიკა
-        registerForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = e.target.email.value;
-            const password = e.target.password.value;
-            authMessage.textContent = 'მიმდინარეობს...';
-            authMessage.className = 'text-center text-sm mt-3 text-gray-500';
+        // მნახველის ლოგიკა
+        document.getElementById('view-stream-btn').addEventListener('click', () => {
+            if (!isAuthReady) {
+                showMessage("გთხოვთ, დაელოდოთ Firebase-ის ინიციალიზაციას.", true);
+                return;
+            }
 
-            try {
-                await createUserWithEmailAndPassword(auth, email, password);
-                authMessage.textContent = '✅ რეგისტრაცია წარმატებით დასრულდა! შესული ხართ.';
-                authMessage.className = 'text-center text-sm mt-3 text-green-600';
-            } catch (error) {
-                if (error.code === 'auth/email-already-in-use' || error.code === 'auth/wrong-password') {
-                    try {
-                        await signInWithEmailAndPassword(auth, email, password);
-                        authMessage.textContent = '✅ შესვლა წარმატებით დასრულდა!';
-                        authMessage.className = 'text-center text-sm mt-3 text-green-600';
-                    } catch (signInError) {
-                        authMessage.textContent = `❌ შესვლა ვერ მოხერხდა: პაროლი ან ელ. ფოსტა არასწორია.`;
-                        authMessage.className = 'text-center text-sm mt-3 text-red-600';
+            const codeInput = document.getElementById('viewer-code-input');
+            const code = codeInput.value.trim();
+            const streamImage = document.getElementById('stream-image');
+            const viewerStatus = document.getElementById('viewer-status');
+
+            if (code.length !== 4 || !/^\d{4}$/.test(code)) {
+                showMessage("❌ კოდი უნდა იყოს ზუსტად 4 ციფრი.", true);
+                return;
+            }
+
+            // წინა onSnapshot-ის გაუქმება, თუ არსებობს
+            if (unsubscribeViewer) {
+                unsubscribeViewer();
+                viewerStatus.textContent = `წინა სტრიმინგი შეჩერდა.`;
+                streamImage.src = 'https://placehold.co/600x400/CCCCCC/666666?text=დაელოდეთ+კადრს';
+            }
+
+            const streamDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'streams', code);
+
+            // onSnapshot-ის დაყენება რეალურ დროში განახლებისთვის
+            unsubscribeViewer = onSnapshot(streamDocRef, (docSnapshot) => {
+                if (docSnapshot.exists()) {
+                    const data = docSnapshot.data();
+                    if (data && data.imageUrl) {
+                        // სურათის განახლება
+                        streamImage.src = data.imageUrl;
+                        viewerStatus.textContent = `✅ სტრიმი კოდით ${code} აქტიურია. ბოლო განახლება: ${new Date(data.timestamp).toLocaleTimeString('ka-GE')}`;
+                    } else {
+                        viewerStatus.textContent = `⚠️ სტრიმი ${code} ნაპოვნია, მაგრამ კადრის მისამართი ცარიელია.`;
                     }
                 } else {
-                    authMessage.textContent = `❌ შეცდომა: ${error.message}`;
-                    authMessage.className = 'text-center text-sm mt-3 text-red-600';
+                    // თუ დოკუმენტი არ არსებობს (სტრიმი არ არის დაწყებული)
+                    streamImage.src = 'https://placehold.co/600x400/CC0000/FFFFFF?text=სტრიმი+არ+მოიძებნა';
+                    viewerStatus.textContent = `❌ სტრიმი კოდით ${code} არ არის დაწყებული.`;
                 }
-            }
+            }, (error) => {
+                console.error("onSnapshot-ის შეცდომა:", error);
+                showMessage(`❌ სტრიმის ნახვის შეცდომა: ${error.message}`, true);
+                viewerStatus.textContent = `❌ შეცდომა სტრიმის დაკავშირებისას.`;
+                if (unsubscribeViewer) unsubscribeViewer();
+            });
+
+            showMessage(`👀 სტრიმინგზე დაკავშირება კოდით ${code}...`, false);
         });
 
-        // გასვლის ლოგიკა
-        logoutButton.addEventListener('click', async () => {
-            await signOut(auth);
-            alert("თქვენ წარმატებით გამოხვედით სისტემიდან.");
-            document.getElementById('email').value = ''; 
-            document.getElementById('password').value = '';
-        });
+        // აპლიკაციის დაწყება
+        initializeFirebase();
 
-
-        // HTML კოდის შენახვა Firestore-ში
-        renderButton.addEventListener('click', async () => {
-            const htmlContent = htmlInput.value;
-            const user = auth.currentUser;
-
-            if (!user) {
-                alert("გთხოვთ, შეხვიდეთ სისტემაში კოდის შესანახად.");
-                return;
-            }
-
-            if (!htmlContent.trim()) {
-                alert("გთხოვთ, ჩასვით HTML კოდი.");
-                return;
-            }
-
-            try {
-                // სტატუსის განახლება
-                renderButton.textContent = "მიმდინარეობს შენახვა...";
-                renderButton.classList.remove('bg-green-600');
-                renderButton.classList.add('bg-gray-400');
-                linkMessage.classList.add('hidden');
-
-                // მონაცემთა შენახვა Firestore-ში
-                const docRef = await addDoc(collection(db, "html_scripts"), {
-                    userId: user.uid,
-                    html: htmlContent,
-                    createdAt: serverTimestamp()
-                });
-
-                const docId = docRef.id;
-                
-                // მუდმივი ლინკის გენერირება
-                const permanentLink = `${window.location.origin}/view/${docId}`;
-                
-                shareLink.href = permanentLink;
-                shareLink.textContent = permanentLink;
-                linkMessage.classList.remove('hidden');
-                
-                // ავტომატური გახსნა ახალ ტაბში
-                window.open(permanentLink, '_blank'); 
-
-            } catch (error) {
-                console.error("შეცდომა კოდის შენახვისას: ", error);
-                alert("კოდის შენახვა ვერ მოხერხდა. იხილეთ კონსოლი დეტალებისთვის.");
-            } finally {
-                // სტატუსის აღდგენა
-                renderButton.textContent = "კოდის შენახვა და მუდმივი ლინკის გენერირება";
-                renderButton.classList.remove('bg-gray-400');
-                renderButton.classList.add('bg-green-600');
-            }
-        });
     </script>
 </body>
 </html>
