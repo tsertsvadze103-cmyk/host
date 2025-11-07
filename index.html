@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML სკრიპტის ვიზუალიზატორი და რეგისტრაცია</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar styles */
+        textarea::-webkit-scrollbar { width: 8px; }
+        textarea::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        textarea::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        textarea::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 text-gray-800 font-sans antialiased min-h-screen flex flex-col items-center justify-center py-12 px-4">
+    
+    <div id="auth-section" class="max-w-md w-full bg-white shadow-xl rounded-xl p-8 mb-8">
+        <h2 class="text-2xl font-bold text-center text-indigo-600 mb-6">🚪 რეგისტრაცია / შესვლა</h2>
+        <form id="register-form" class="space-y-4">
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700">ელ. ფოსტა:</label>
+                <input type="email" id="email" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700">პაროლი:</label>
+                <input type="password" id="password" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md transition duration-150 ease-in-out">
+                რეგისტრაცია
+            </button>
+            <p id="auth-message" class="text-center text-sm mt-3"></p>
+        </form>
+    </div>
+
+    <div id="main-content" class="max-w-4xl w-full bg-white shadow-2xl rounded-xl p-8 md:p-10 lg:p-12 space-y-8 transform transition-opacity duration-500" style="opacity: 0;">
+
+        <header class="text-center space-y-4">
+            <div class="flex items-center justify-center text-indigo-600 mb-2">
+                <span class="material-icons text-5xl md:text-6xl">code</span>
+            </div>
+            <h1 class="text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 leading-tight">
+                <span class="text-indigo-600">HTML</span> სკრიპტის ვიზუალიზატორი
+            </h1>
+            <p id="welcome-message" class="text-xl text-green-600 font-semibold max-w-2xl mx-auto">
+                კეთილი იყოს თქვენი მობრძანება!
+            </p>
+        </header>
+
+        <section class="space-y-6">
+             <div class="flex justify-end">
+                <button id="logout-button" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-3 rounded-full text-sm">
+                    გასვლა
+                </button>
+            </div>
+            <div class="relative">
+                <label for="html-input" class="block text-gray-700 text-lg font-semibold mb-2 flex items-center">
+                    <span class="material-icons text-indigo-500 mr-2">edit_note</span>
+                    ჩასვით თქვენი HTML კოდი აქ:
+                </label>
+                <textarea
+                    id="html-input"
+                    class="w-full p-4 border-2 border-indigo-300 rounded-lg focus:ring-4 focus:ring-indigo-200 focus:border-indigo-500 transition-all duration-200 ease-in-out text-gray-800 text-base font-mono bg-gray-50 resize-y min-h-[200px] md:min-h-[250px] shadow-sm"
+                    placeholder="<div>
+    <h1 style='color: #2563eb;'>გამარჯობა მსოფლიო!</h1>
+    <p>ეს არის თქვენი დინამიურად გენერირებული კონტენტი.</p>
+    </div>"
+                    rows="10"
+                ></textarea>
+            </div>
+            <div class="flex justify-center">
+                <button
+                    id="render-button"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-full shadow-lg flex items-center justify-center transform hover:scale-105 transition-all duration-300 ease-in-out focus:outline-none focus:ring-4 focus:ring-indigo-300"
+                >
+                    <span class="material-icons mr-2">open_in_new</span>
+                    გახსნა ახალ გვერდზე
+                </button>
+            </div>
+        </section>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+        
+        // !!! მნიშვნელოვანია: გამოიყენეთ თქვენი პროექტის კონფიგურაცია !!!
+        const firebaseConfig = {
+            apiKey: "AIzaSyAB2FnGzm-vRFzjzMFc5fSqIx4JFhtSZHg", 
+            authDomain: "hostsite-87e89.firebaseapp.com",
+            projectId: "hostsite-87e89",
+            storageBucket: "hostsite-87e89.firebasestorage.app",
+            messagingSenderId: "594577784773",
+            appId: "1:594577784773:web:16b148cc0bc00999ebd5ac"
+        };
+
+        // ინიციალიზაცია
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // DOM ელემენტები
+        const authSection = document.getElementById('auth-section');
+        const mainContent = document.getElementById('main-content');
+        const registerForm = document.getElementById('register-form');
+        const authMessage = document.getElementById('auth-message');
+        const welcomeMessage = document.getElementById('welcome-message');
+        const logoutButton = document.getElementById('logout-button');
+        const emailInput = document.getElementById('email');
+
+        // --- 1. ავთენტიფიკაციის სტატუსის მართვა ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // მომხმარებელი შესულია
+                authSection.style.display = 'none';
+                mainContent.style.opacity = '1';
+                mainContent.style.display = 'block';
+                welcomeMessage.textContent = `კეთილი იყოს თქვენი მობრძანება, ${user.email}! (შესული ხართ)`;
+            } else {
+                // მომხმარებელი გასულია
+                authSection.style.display = 'block';
+                mainContent.style.opacity = '0';
+                mainContent.style.display = 'none';
+                welcomeMessage.textContent = `კეთილი იყოს თქვენი მობრძანება! (გასული ხართ)`;
+            }
+        });
+
+        // --- 2. რეგისტრაცია / შესვლის ლოგიკა ---
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = e.target.email.value;
+            const password = e.target.password.value;
+            authMessage.textContent = 'მიმდინარეობს...';
+            authMessage.className = 'text-center text-sm mt-3 text-gray-500';
+
+            try {
+                // ვცდილობთ რეგისტრაციას
+                await createUserWithEmailAndPassword(auth, email, password);
+                authMessage.textContent = '✅ რეგისტრაცია წარმატებით დასრულდა! შესული ხართ.';
+                authMessage.className = 'text-center text-sm mt-3 text-green-600';
+            } catch (error) {
+                // თუ რეგისტრაცია ვერ მოხერხდა (მაგ. მომხმარებელი უკვე არსებობს, ან სუსტი პაროლია)
+                if (error.code === 'auth/email-already-in-use') {
+                    // თუ მომხმარებელი უკვე არსებობს, ვცდილობთ შესვლას (Sign In)
+                    try {
+                        await signInWithEmailAndPassword(auth, email, password);
+                        authMessage.textContent = '✅ შესვლა წარმატებით დასრულდა!';
+                        authMessage.className = 'text-center text-sm mt-3 text-green-600';
+                    } catch (signInError) {
+                        authMessage.textContent = `❌ შესვლა ვერ მოხერხდა: ${signInError.message}`;
+                        authMessage.className = 'text-center text-sm mt-3 text-red-600';
+                    }
+                } else {
+                    // სხვა შეცდომები
+                    authMessage.textContent = `❌ შეცდომა: ${error.message}`;
+                    authMessage.className = 'text-center text-sm mt-3 text-red-600';
+                }
+            }
+        });
+
+        // --- 3. გასვლის ლოგიკა ---
+        logoutButton.addEventListener('click', async () => {
+            await signOut(auth);
+            alert("თქვენ წარმატებით გამოხვედით სისტემიდან.");
+            emailInput.value = ''; // ვასუფთავებთ ველებს გასვლის შემდეგ
+            document.getElementById('password').value = '';
+        });
+
+        // --- 4. HTML ვიზუალიზატორის ლოგიკა (უცვლელი) ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const htmlInput = document.getElementById('html-input');
+            const renderButton = document.getElementById('render-button');
+
+            renderButton.addEventListener('click', () => {
+                const htmlContent = htmlInput.value;
+                const blob = new Blob([htmlContent], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const newWindow = window.open(url, '_blank');
+
+                if (newWindow) {
+                    newWindow.addEventListener('load', () => {
+                        URL.revokeObjectURL(url);
+                    });
+                } else {
+                    alert('ახალი გვერდის გახსნა დაიბლოკა! გთხოვთ, გამორთოთ Pop-up ბლოკერი ამ საიტისთვის.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
