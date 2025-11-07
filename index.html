@@ -12,6 +12,17 @@
         textarea::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
         textarea::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         textarea::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        /* Style for full-screen view */
+        .view-mode {
+             margin: 0;
+             padding: 0;
+             overflow: hidden;
+             display: flex;
+             align-items: center;
+             justify-content: center;
+             min-height: 100vh;
+             background-color: white; /* Clean background for viewer */
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 text-gray-800 font-sans antialiased min-h-screen flex flex-col items-center justify-center py-12 px-4">
@@ -88,7 +99,6 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
-        // *** სრული Firestore იმპორტი ***
         import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
         
         // !!! შეცვალეთ ეს თქვენი კონფიგურაციით !!!
@@ -122,9 +132,9 @@
         // --- 1. კოდის ჩვენების ლოგიკა (/view/ID მისამართებისთვის) ---
         async function fetchAndRenderHtml(id) {
             
-            // ვასუფთავებთ გვერდს და ვაჩვენებთ ჩატვირთვის სტატუსს
-            document.body.innerHTML = '<h1>კოდის ჩატვირთვა...</h1>';
-            document.body.className = 'bg-white flex items-center justify-center min-h-screen';
+            // ვცვლით body-ის სტილს, რათა ვიზუალიზატორი იყოს სუფთა
+            document.body.className = 'view-mode';
+            document.body.innerHTML = '<h1>კოდის ჩატვირთვა...</h1><p>მიმდინარეობს Firestore-თან დაკავშირება...</p>';
 
             try {
                 const docRef = doc(db, "html_scripts", id);
@@ -133,6 +143,11 @@
                 if (docSnap.exists()) {
                     const htmlContent = docSnap.data().html;
                     
+                    if (!htmlContent) {
+                         document.body.innerHTML = '<h1>❌ ცარიელი მონაცემები</h1><p>Firestore-ში კოდი ცარიელია.</p>';
+                         return;
+                    }
+
                     // ვქმნით უსაფრთხო IFRAME-ს HTML კონტენტის გასაშვებად
                     const iframe = document.createElement('iframe');
                     iframe.style.width = '100%';
@@ -143,7 +158,6 @@
                     
                     document.body.innerHTML = ''; 
                     document.body.appendChild(iframe);
-                    document.body.style.overflow = 'hidden'; 
                     
                     const iframeDoc = iframe.contentWindow.document;
                     iframeDoc.open();
@@ -154,7 +168,7 @@
                     document.body.innerHTML = '<h1>❌ ვერ მოიძებნა</h1><p>კოდი ამ ID-ით არ არსებობს.</p>';
                 }
             } catch (error) {
-                document.body.innerHTML = `<h1>❌ შეცდომა</h1><p>მონაცემთა ბაზიდან მიღებისას: ${error.message}</p>`;
+                 document.body.innerHTML = `<h1>❌ შეცდომა</h1><p>ვერ ხერხდება მონაცემთა წამოღება: ${error.message}</p>`;
             }
         }
         
@@ -165,14 +179,12 @@
         if (isViewPage) {
             const docId = path.split('/')[2];
             if (docId) {
-                // თუ ეს არის /view/ID მისამართი, ვუშვებთ ჩვენების ლოგიკას
                 fetchAndRenderHtml(docId);
                 return; // ვაჩერებთ მთელ დანარჩენ ლოგიკას!
             }
         }
 
         // --- 3. რეგულარული აპლიკაციის ლოგიკა (მხოლოდ მთავარი გვერდისთვის) ---
-        // გაეშვება მხოლოდ იმ შემთხვევაში, თუ ეს არ არის /view/ID გვერდი.
         
         // ავთენტიფიკაციის სტატუსის მართვა
         onAuthStateChanged(auth, (user) => {
@@ -198,13 +210,11 @@
             authMessage.className = 'text-center text-sm mt-3 text-gray-500';
 
             try {
-                // ცდილობს რეგისტრაციას
                 await createUserWithEmailAndPassword(auth, email, password);
                 authMessage.textContent = '✅ რეგისტრაცია წარმატებით დასრულდა! შესული ხართ.';
                 authMessage.className = 'text-center text-sm mt-3 text-green-600';
             } catch (error) {
                 if (error.code === 'auth/email-already-in-use' || error.code === 'auth/wrong-password') {
-                    // თუ მომხმარებელი არსებობს, ცდილობს შესვლას
                     try {
                         await signInWithEmailAndPassword(auth, email, password);
                         authMessage.textContent = '✅ შესვლა წარმატებით დასრულდა!';
