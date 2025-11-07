@@ -146,39 +146,49 @@
 
         async function initializeFirebase() {
             try {
-                // ინიციალიზაცია
+                // 1. ინიციალიზაცია
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
 
-                let customTokenSuccess = false;
+                let authSuccess = false;
 
-                // 1. ცდა ავთენტიფიკაციის ტოკენით
+                // 2. ცდა ავთენტიფიკაციის ტოკენით (თუ მოწოდებულია)
                 if (initialAuthToken) {
                     try {
                         await signInWithCustomToken(auth, initialAuthToken);
                         showMessage("✅ Firebase ავთენტიფიკაცია წარმატებით დასრულდა (მომხმარებლის ტოკენით).");
-                        customTokenSuccess = true;
+                        authSuccess = true;
                     } catch (e) {
-                        // თუ ტოკენით შესვლა ვერ მოხერხდა (აქ დაფიქსირდება auth/admin-restricted-operation)
-                        console.error("Custom token sign-in failed. Falling back to anonymous login:", e);
+                        // ტოკენით შესვლა ვერ მოხერხდა (აქ ვიღებთ 'auth/admin-restricted-operation' შეცდომას)
+                        console.error("Custom token sign-in failed:", e.message);
+                        // არ ვუშვებთ კრიტიკულ შეცდომას, ვცდილობთ ანონიმურ შესვლას
                         showMessage(`⚠️ ტოკენით შესვლა ვერ მოხერხდა: ${e.message}. ვეცდებით ანონიმურ შესვლას.`, true);
                     }
                 }
 
-                // 2. თუ ტოკენით შესვლა ვერ მოხერხდა, ან ტოკენი არ იყო
-                if (!customTokenSuccess) {
+                // 3. თუ არ ვართ შესული (ან ტოკენით შესვლა ჩავარდა), ვცდილობთ ანონიმურ შესვლას
+                if (!authSuccess) {
                     await signInAnonymously(auth);
                     showMessage("✅ Firebase ავთენტიფიკაცია წარმატებით დასრულდა (ანონიმურად).");
+                    authSuccess = true;
                 }
                 
-                isAuthReady = true;
+                // 4. საბოლოო შემოწმება
+                if (authSuccess && auth.currentUser) {
+                     isAuthReady = true;
+                } else {
+                    throw new Error("Unable to sign in anonymously or with token.");
+                }
 
             } catch (error) {
-                // კრიტიკული შეცდომა (მაგ., ინიციალიზაციის პრობლემა)
+                // კრიტიკული შეცდომა (მაგ., ინიციალიზაციის ან ანონიმური შესვლის პრობლემა)
                 console.error("Firebase-ის ინიციალიზაციის ან ავთენტიფიკაციის შეცდომა:", error);
                 showMessage(`❌ Firebase-ის ინიციალიზაციის შეცდომა: ${error.message}. შეამოწმეთ კონფიგურაცია.`, true);
+                return; // აპლიკაცია ვერ გაეშვება ავთენტიფიკაციის გარეშე.
             }
+
+            // --- კოდის დანარჩენი ნაწილი (მხოლოდ წარმატების შემთხვევაში) ---
         }
 
         // --- მოწყობილობის სიმულატორის ლოგიკა (Uploader) ---
